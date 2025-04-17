@@ -1,6 +1,13 @@
 import { useState } from 'react';
 import Head from 'next/head';
 
+const backgrounds = [
+  'https://example.com/monalisa.jpg',
+  'https://example.com/starry-night.jpg',
+  'https://example.com/the-scream.jpg',
+  'https://example.com/the-persistence-of-memory.jpg',
+];
+
 export default function Home() {
   const [prompt, setPrompt] = useState('');
   const [imageUrl, setImageUrl] = useState('');
@@ -11,44 +18,69 @@ export default function Home() {
     setLoading(true);
     setImageUrl('');
 
-    const response = await fetch('/api/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt })
-    });
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
+      });
 
-    const data = await response.json();
-    setImageUrl(data.imageUrl);
-    setLoading(false);
+      const data = await response.json();
+      setImageUrl(data.imageUrl);
+    } catch (error) {
+      console.error('Error generating image:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // 随机选择背景
+  const background = backgrounds[Math.floor(Math.random() * backgrounds.length)];
+
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
+    <div
+      className="min-h-screen bg-cover bg-center flex flex-col items-center justify-center p-8 relative"
+      style={{ backgroundImage: `url(${background})` }}
+    >
       <Head>
         <title>MCP Gallery</title>
       </Head>
 
-      <h1 className="text-3xl font-bold mb-4">🖼️ MCP Gallery</h1>
+      {/* 钱包登录按钮 */}
+      <div className="absolute top-6 right-6">
+        <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg shadow-lg">
+          登录钱包
+        </button>
+      </div>
 
-      <input
-        type="text"
-        placeholder="描述你想要的图像..."
-        className="w-full max-w-md px-4 py-2 mb-4 border rounded"
-        value={prompt}
-        onChange={(e) => setPrompt(e.target.value)}
-      />
+      {/* 页面内容 */}
+      <div className="bg-white bg-opacity-60 p-8 rounded-xl shadow-xl max-w-lg w-full text-center">
+        <h1 className="text-4xl font-extrabold text-gray-800 mb-6">🖼️ MCP Gallery</h1>
 
-      <button
-        onClick={generateImage}
-        disabled={loading}
-        className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
-      >
-        {loading ? '生成中...' : '生成图像'}
-      </button>
+        <input
+          type="text"
+          placeholder="描述你想要的图像..."
+          className="w-full px-4 py-2 mb-4 border-2 border-gray-300 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-pink-400"
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+        />
+
+        <button
+          onClick={generateImage}
+          disabled={loading}
+          className="w-full py-3 bg-gradient-to-r from-pink-500 to-red-500 text-white font-bold rounded-lg shadow-lg hover:bg-pink-600 transition ease-in-out duration-300"
+        >
+          {loading ? '生成中...' : '生成图像'}
+        </button>
+      </div>
 
       {imageUrl && (
-        <div className="mt-6">
-          <img src={imageUrl} alt="AI生成图像" className="rounded shadow" />
+        <div className="mt-8 max-w-lg w-full">
+          <img
+            src={imageUrl}
+            alt="AI生成图像"
+            className="w-full h-auto rounded-lg shadow-2xl"
+          />
         </div>
       )}
     </div>
